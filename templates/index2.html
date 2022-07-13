@@ -1,0 +1,151 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Tirta Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/png" href="assets/images/icon/favicon.icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/themify-icons.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/metisMenu.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/owl.carousel.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/slicknav.min.css') }}">
+  <!-- amchart css -->
+  <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+  <!-- others css -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/default-css.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  <!-- modernizr css -->
+  <script src="{{ url_for('static', filename='js/vendor/modernizr-2.8.3.min.js') }}"></script>
+
+</head>
+
+<body>
+  <!-- preloader area start -->
+  <div id="preloader">
+    <div class="loader"></div>
+  </div>
+  <!-- preloader area end -->
+  <!-- page container area start -->
+  <div class="page-container">
+    <!-- sidebar menu area start -->
+
+    <!-- sidebar menu area end -->
+    <!-- main content area start -->
+    <div class="main-content">
+      <!-- page title area end -->
+      <div class="main-content-inner pt-5">
+        <!-- overview area start -->
+        <div class="row">
+          <div class="col-xl-12 col-lg-8 col-md-6 col-sm-9 col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h4 class="header-title">Overview Prediksi Data Kelembaban Tanah</h4>
+                </div>
+                <canvas id="ChartKelembaban"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- overview area end -->
+        <!-- market value area start -->
+        <div class="row mt-5">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-sm-flex justify-content-between align-items-center">
+                  <h4 class="header-title mb-0">Data Terakhir</h4>
+                </div>
+                <div class="market-status-table mt-4">
+                  <div class="table-responsive">
+                    <table class="dbkit-table" id="recent_data">
+                      <thead>
+                        <tr class="heading-td">
+                          <td>Tanggal</td>
+                          <td class="text-center">Kelembaban Tanah</td>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-area">
+        <p>© Copyright 2020. All right reserved. Template from <a href="https://colorlib.com/wp/">Tirta</a>.</p>
+      </div>
+    </footer>
+  </div>
+  <script src="{{ url_for('static', filename='js/vendor/jquery-2.2.4.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/underscore@1.12.0/underscore-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+  <script type="text/javascript">
+    const LIMIT = 10;
+    const INTERVAL = 3000;
+    var outlier = 'font-weight-bold text-danger';
+    var tbody = '<tr>';
+    tbody += '<th class="text-center">*waktu*</th>'
+    tbody += '<td class="text-center .kelembaban">*kelembaban*%</td>'
+    tbody += '</tr>'
+
+    var tirta = [];
+
+    function renderChart(tirta) {
+      config.data.labels = _.pluck(tirta, 'waktu');
+      // Kelembaban
+      config.data.datasets[0].pointBorderWidth = _.map(tirta, (value, _) => value.kelembaban.anomali ? '10' : '2');
+      config.data.datasets[0].data = _.map(tirta, (value, _) => value.kelembaban.asli);
+      // Prediksi
+      config.data.datasets[1].data = _.map(tirta, (value, _) => value.kelembaban.prediksi);
+      // Batas Bawah
+      config.data.datasets[2].data = _.map(tirta, (value, _) => value.kelembaban.lower);
+      // Batas Atas
+      config.data.datasets[3].data = _.map(tirta, (value, _) => value.kelembaban.upper);
+
+      chart.update();
+    }
+
+    function renderTable(tirta) {
+      $('#recent_data tbody').html('');
+      tirta.forEach((item, i) => {
+        $('#recent_data tbody').append(
+          tbody.replace('*waktu*', item.waktu)
+          .replace('.kelembaban', (item.kelembaban.anomali) ? outlier : '')
+          .replace('*kelembaban*', item.kelembaban.asli)
+        );
+      });
+    }
+
+    function doAjax() {
+      $.get("/ajax", function(data) {
+          tirta.push(data);
+          if (tirta.length > LIMIT) tirta.shift();
+          renderChart(tirta);
+          renderTable(tirta);
+        }, 'json')
+        .always(function() {
+          setTimeout(doAjax, INTERVAL);
+        });
+    }
+    setTimeout(doAjax, INTERVAL);
+  </script>
+
+
+</body>
+
+</html>
