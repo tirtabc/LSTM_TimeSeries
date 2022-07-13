@@ -5,13 +5,28 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout, GRU, Bidirectional
-from keras.optimizers import SGD
+# from keras.optimizers import SGD
+# from tensorflow.keras.optimizers import SGD
 import math
 from sklearn.metrics import mean_squared_error
 import pickle
 
 regressor = pickle.load(open('../model/lstm.pkl', 'rb'))
 sc = pickle.load(open('../model/scaler.pkl', 'rb'))
+y_pred = regressor.predict([[[[80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4],
+                         [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4], [80, 80, 80, 4]]]])
+
+print(y_pred)
 
 plt.style.use('fivethirtyeight')
 
@@ -50,10 +65,12 @@ dataset.set_index('waktu', inplace=True)
 
 # Checking for missing values
 y_test = dataset['2020-03-10':].values
+print('y_test', y_test.shape)
 
 inputs = dataset[len(dataset) - len(y_test) - TIMESTEPS:].values
 inputs = inputs.reshape(-1, 4)
 inputs = sc.transform(inputs)
+print('y_test', inputs.shape)
 
 # Preparing X_test and predicting the prices
 X_test = []
@@ -62,6 +79,7 @@ for i in range(TIMESTEPS, size):
     X_test.append(inputs[i - TIMESTEPS:i])
 
 X_test = np.array(X_test)
+print('y_test', X_test.shape)
 X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 4))
 y_pred = regressor.predict(X_test)
 y_pred = sc.inverse_transform(y_pred)
